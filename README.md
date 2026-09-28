@@ -1,3 +1,22 @@
+### Physician Service System
+
+Windows 下双击根目录的 `start-frontend.cmd`，或在 `frontend` 目录运行 `npm run dev`，然后访问：
+
+```text
+http://localhost:8081
+```
+
+系统账户：
+
+```text
+Doctor:           doctor / 123456
+Department Admin: admin / admin123
+```
+
+运行期数据会在同一个浏览器会话中保留；关闭当前浏览器会话并重新打开后会恢复初始数据。在线问诊的固定互动病例与问答内容见 `CONSULTATION_CONVERSATION_SCRIPT.md`。
+
+### 原项目说明
+
 ### 基于SpringBoot + Vue + 支付宝沙盒的智能云医疗系统 .
 
 🏥 基于 SpringBoot + Vue 的一体化智能云医疗系统 (HIS)。涵盖互联网医院、电子处方流程、医疗供应链与医药库存管理。集成多端挂号、医生排班、WebGIS 医院地图及全维度医疗数据大屏。

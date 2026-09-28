@@ -1,5 +1,5 @@
 <template>
-  <a-locale-provider :locale="chinese">
+  <a-locale-provider :locale="english">
     <div id="febs">
       <router-view/>
     </div>
@@ -8,14 +8,13 @@
 
 <script>
 import enquireScreen from './utils/device'
-import chinese from 'ant-design-vue/lib/locale-provider/zh_CN'
-import 'moment/locale/zh-cn'
+import english from 'ant-design-vue/lib/locale-provider/en_US'
 
 export default {
   name: 'Febs',
   data () {
     return {
-      chinese
+      english
     }
   },
   created () {
