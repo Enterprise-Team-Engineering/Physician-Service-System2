@@ -10,7 +10,7 @@
 
 ## 环境
 
-- MySQL 8，账号 `root`，密码 `123456`
+- MySQL 8
 - PHP 8，需启用 `pdo_mysql`
 - Node.js。当前机器是 Node 22 时，启动前端要加上 OpenSSL 兼容参数
 
