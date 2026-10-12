@@ -43,8 +43,9 @@ export default {
   methods: {
     patient (id) { return demoService.getPatient(id) || {} },
     accept (row) {
-      demoService.acceptConsultation(row.id, this.user.id)
-      this.$message.success(`Consultation ${row.id} is now ongoing`)
+      demoService.acceptConsultation(row.id, this.user.id).then(() => {
+        this.$message.success(`Consultation ${row.id} is now ongoing`)
+      }).catch(error => this.$message.error(error.message))
     },
     openChat (row) { this.$router.push(`/app/consultations/${row.id}/chat`) }
   }

@@ -48,9 +48,10 @@ export default {
     doctorName (id) { const item = demoService.getDoctor(id); return item ? item.name : '-' },
     open (row) { this.selected = row; this.visible = true },
     markReviewed () {
-      demoService.reviewRecord(this.selected.id, this.user.id)
-      this.selected = demoService.getRecord(this.selected.id)
-      this.$message.success('Medical record marked as reviewed')
+      demoService.reviewRecord(this.selected.id, this.user.id).then(() => {
+        this.selected = demoService.getRecord(this.selected.id)
+        this.$message.success('Medical record marked as reviewed')
+      }).catch(error => this.$message.error(error.message))
     }
   }
 }

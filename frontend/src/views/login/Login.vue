@@ -26,7 +26,7 @@
 
 <script>
 import {mapMutations} from 'vuex'
-import {authenticateUser} from '@/demo/config'
+import {apiPost} from '@/services/api'
 import {getDemoMenu} from '@/demo/menu'
 
 export default {
@@ -48,28 +48,27 @@ export default {
       })
     },
     login (username, password) {
-      const user = authenticateUser(String(username).trim().toLowerCase(), password)
-      if (!user) {
-        this.error = 'Invalid username or password.'
-        return
-      }
       this.loading = true
-      this.setToken(`session-token-${user.roleCode.toLowerCase()}`)
-      this.setExpireTime(Date.now() + 86400000)
-      this.setUser(user)
-      this.setPermissions(['system:access'])
-      this.setRoles([user.roleCode])
-      this.setTheme('light')
-      this.setLayout('side')
-      this.setMultipage(false)
-      this.fixSiderbar(true)
-      this.fixHeader(true)
-      localStorage.setItem('USER_ROUTER', JSON.stringify(getDemoMenu(user.roleCode)))
-      setTimeout(() => {
-        this.loading = false
+      this.error = ''
+      apiPost('/login', {username: String(username).trim().toLowerCase(), password}).then(result => {
+        const user = result.user
+        this.setToken(result.token)
+        this.setExpireTime(Date.now() + 86400000)
+        this.setUser(user)
+        this.setPermissions(['system:access'])
+        this.setRoles([user.roleCode])
+        this.setTheme('light')
+        this.setLayout('side')
+        this.setMultipage(false)
+        this.fixSiderbar(true)
+        this.fixHeader(true)
+        localStorage.setItem('USER_ROUTER', JSON.stringify(getDemoMenu(user.roleCode)))
         window.location.hash = '#/app/dashboard'
         window.location.reload()
-      }, 250)
+      }).catch(error => {
+        this.loading = false
+        this.error = error.message || 'Invalid username or password.'
+      })
     },
     ...mapMutations({
       setToken: 'account/setToken', setExpireTime: 'account/setExpireTime', setPermissions: 'account/setPermissions',

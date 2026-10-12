@@ -57,9 +57,11 @@ export default {
     },
     confirm () {
       if (!this.selectedDoctorId) { this.$message.warning('Please select a doctor'); return }
-      demoService.assignPatient(this.selectedPatient.id, this.selectedDoctorId, this.user.id)
-      this.visible = false
-      this.$message.success(`${this.selectedPatient.name} has been assigned to ${demoService.getDoctor(this.selectedDoctorId).name}`)
+      const doctor = demoService.getDoctor(this.selectedDoctorId)
+      demoService.assignPatient(this.selectedPatient.id, this.selectedDoctorId, this.user.id).then(() => {
+        this.visible = false
+        this.$message.success(`${this.selectedPatient.name} has been assigned to ${doctor.name}`)
+      }).catch(error => this.$message.error(error.message))
     }
   }
 }

@@ -4,7 +4,7 @@
 
 - Sign in as Doctor: `doctor / 123456`
 - Open `Online Consultation > Consultation Queue`
-- Locate consultation `#3004`, patient `Michael Davis`
+- Locate consultation `#3004`, patient `Emily`
 - Select `Accept`, then `Open Chat`
 
 The same questions and automatic responses work in every ongoing patient consultation.
@@ -13,7 +13,7 @@ The same questions and automatic responses work in every ongoing patient consult
 
 Enter the following doctor messages in order. The patient replies automatically after each message.
 
-**Doctor:** Hello Michael, how long have you had these symptoms?
+**Doctor:** Hello Emily, how long have you had these symptoms?
 
 **Patient:** The sore throat started three days ago, and the cough began yesterday.
 

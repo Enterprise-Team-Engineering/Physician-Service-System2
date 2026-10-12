@@ -64,16 +64,19 @@ export default {
     sendText () {
       const content = this.messageText.trim()
       if (!content) { this.$message.warning('Please enter a message'); return }
-      demoService.sendMessage(this.consultation.id, this.user.id, 'TEXT', content)
-      this.messageText = ''
-      this.schedulePatientReply(content)
+      demoService.sendMessage(this.consultation.id, this.user.id, 'TEXT', content).then(() => {
+        this.messageText = ''
+        this.schedulePatientReply(content)
+      }).catch(error => this.$message.error(error.message))
     },
     schedulePatientReply (content) {
       const reply = demoService.getPatientReply(this.consultation.id, content)
       if (!reply) return
       this.replyPending = true
       this.replyTimer = setTimeout(() => {
-        if (this.consultation.status === 'ONGOING') demoService.sendPatientMessage(this.consultation.id, this.patient.id, reply)
+        if (this.consultation.status === 'ONGOING') {
+          demoService.sendPatientMessage(this.consultation.id, this.patient.id, reply).catch(error => this.$message.error(error.message))
+        }
         this.replyPending = false
         this.replyTimer = null
       }, 900)
@@ -84,20 +87,19 @@ export default {
       if (file.size > 1500000) { this.$message.warning('Please choose an image smaller than 1.5 MB'); event.target.value = ''; return }
       const reader = new FileReader()
       reader.onload = () => {
-        try {
-          demoService.sendMessage(this.consultation.id, this.user.id, 'IMAGE', reader.result)
+        demoService.sendMessage(this.consultation.id, this.user.id, 'IMAGE', reader.result).then(() => {
           this.$message.success('Image added to the conversation')
-        } catch (e) {
+        }).catch(() => {
           this.$message.error('The image could not be added. Please choose a smaller file.')
-        }
-        event.target.value = ''
+        }).then(() => { event.target.value = '' })
       }
       reader.readAsDataURL(file)
     },
     endConsultation () {
       this.$confirm({title: 'Are you sure you want to end this consultation?', content: 'The consultation will move to history.', okText: 'End Consultation', onOk: () => {
-        demoService.endConsultation(this.consultation.id)
-        this.$message.success('Consultation completed')
+        return demoService.endConsultation(this.consultation.id).then(() => {
+          this.$message.success('Consultation completed')
+        })
       }})
     },
     createRecord () {

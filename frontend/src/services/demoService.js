@@ -1,17 +1,13 @@
 import store from '@/store'
-
-function now () {
-  const date = new Date()
-  const pad = value => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
+import {apiPost} from '@/services/api'
 
 function data () {
   return store.state.demo.data
 }
 
-function nextId (items, floor) {
-  return Math.max(floor, ...items.map(item => Number(item.id) || 0)) + 1
+function saveSnapshot (payload) {
+  store.commit('demo/setData', payload)
+  return payload
 }
 
 const demoService = {
@@ -38,10 +34,7 @@ const demoService = {
     })
   },
   assignPatient (patientId, doctorId, assignedBy) {
-    store.commit('demo/assignPatient', {
-      id: nextId(data().assignments, 0), patientId: Number(patientId), doctorId: Number(doctorId),
-      departmentId: 1, assignedBy: Number(assignedBy), assignedAt: now(), status: 'ACTIVE'
-    })
+    return apiPost('/assignments', {patientId: Number(patientId), doctorId: Number(doctorId), assignedBy: Number(assignedBy)}).then(saveSnapshot)
   },
   getConsultations (doctorId, status) {
     return data().consultations.filter(item => (!doctorId || item.doctorId === Number(doctorId) || (item.status === 'PENDING' && !item.doctorId)) && (!status || item.status === status))
@@ -50,22 +43,20 @@ const demoService = {
     return data().consultations.find(item => item.id === Number(id))
   },
   acceptConsultation (id, doctorId) {
-    store.commit('demo/acceptConsultation', {id: Number(id), doctorId: Number(doctorId), acceptedAt: now()})
+    return apiPost('/consultations/accept', {id: Number(id), doctorId: Number(doctorId)}).then(saveSnapshot)
   },
   getMessages (consultationId) {
     return data().messages.filter(item => item.consultationId === Number(consultationId))
   },
   sendMessage (consultationId, senderId, messageType, content) {
-    store.commit('demo/sendMessage', {
-      id: nextId(data().messages, 0), consultationId: Number(consultationId), senderId: Number(senderId),
-      senderType: 'DOCTOR', messageType, content, createdAt: now()
-    })
+    return apiPost('/messages', {
+      consultationId: Number(consultationId), senderId: Number(senderId), senderType: 'DOCTOR', messageType, content
+    }).then(saveSnapshot)
   },
   sendPatientMessage (consultationId, patientId, content) {
-    store.commit('demo/sendMessage', {
-      id: nextId(data().messages, 0), consultationId: Number(consultationId), senderId: Number(patientId),
-      senderType: 'PATIENT', messageType: 'TEXT', content, createdAt: now()
-    })
+    return apiPost('/messages', {
+      consultationId: Number(consultationId), senderId: Number(patientId), senderType: 'PATIENT', messageType: 'TEXT', content
+    }).then(saveSnapshot)
   },
   getPatientReply (consultationId, message) {
     const consultation = this.getConsultation(consultationId)
@@ -85,7 +76,7 @@ const demoService = {
     return replies[(Math.max(doctorMessageCount, 1) - 1) % replies.length]
   },
   endConsultation (id) {
-    store.commit('demo/endConsultation', {id: Number(id), completedAt: now()})
+    return apiPost('/consultations/end', {id: Number(id)}).then(saveSnapshot)
   },
   getRecords (filters) {
     const params = filters || {}
@@ -96,16 +87,10 @@ const demoService = {
     return data().medicalRecords.find(item => item.id === Number(id))
   },
   saveRecord (record) {
-    const stamp = now()
-    const saved = Object.assign({}, record)
-    if (!saved.id) {
-      saved.id = nextId(data().medicalRecords, 4000)
-      saved.createdAt = stamp
-    }
-    saved.updatedAt = stamp
-    saved.status = saved.status || 'DRAFT'
-    store.commit('demo/saveRecord', saved)
-    return saved
+    return apiPost('/records', record).then(result => {
+      saveSnapshot(result.data)
+      return result.record
+    })
   },
   submitRecord (record) {
     return this.saveRecord(Object.assign({}, record, {status: 'SUBMITTED'}))
@@ -114,12 +99,10 @@ const demoService = {
     return data().medicalOrders.filter(item => item.medicalRecordId === Number(medicalRecordId))
   },
   addOrder (order) {
-    const saved = Object.assign({}, order, {id: nextId(data().medicalOrders, 5000), createdAt: now()})
-    store.commit('demo/addOrder', saved)
-    return saved
+    return apiPost('/orders', order).then(saveSnapshot)
   },
   reviewRecord (id, reviewedBy) {
-    store.commit('demo/reviewRecord', {id: Number(id), reviewedBy: Number(reviewedBy), reviewedAt: now()})
+    return apiPost('/records/review', {id: Number(id), reviewedBy: Number(reviewedBy)}).then(saveSnapshot)
   }
 }
 

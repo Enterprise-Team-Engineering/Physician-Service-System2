@@ -67,26 +67,34 @@ export default {
     typeLabel (type) { return {MEDICATION: 'Medication', LAB_TEST: 'Lab Test', OTHER: 'Other'}[type] },
     persist (status) {
       const payload = Object.assign({}, this.form, {status: status || this.form.status})
-      this.form = status === 'SUBMITTED' ? demoService.submitRecord(payload) : demoService.saveRecord(payload)
-      if (!this.$route.params.id) this.$router.replace(`/app/records/${this.form.id}`)
+      const request = status === 'SUBMITTED' ? demoService.submitRecord(payload) : demoService.saveRecord(payload)
+      return request.then(saved => {
+        this.form = saved
+        if (!this.$route.params.id) this.$router.replace(`/app/records/${this.form.id}`)
+        return saved
+      })
     },
-    saveDraft () { this.persist('DRAFT'); this.$message.success('Draft saved locally') },
+    saveDraft () {
+      this.persist('DRAFT').then(() => this.$message.success('Draft saved')).catch(error => this.$message.error(error.message))
+    },
     openOrder () {
-      if (!this.form.id) this.persist('DRAFT')
-      this.newOrder = {orderType: 'MEDICATION', content: ''}
-      this.orderVisible = true
+      const ready = this.form.id ? Promise.resolve() : this.persist('DRAFT')
+      ready.then(() => {
+        this.newOrder = {orderType: 'MEDICATION', content: ''}
+        this.orderVisible = true
+      }).catch(error => this.$message.error(error.message))
     },
     addOrder () {
       if (!this.newOrder.content.trim()) { this.$message.warning('Please enter the medical order content'); return }
-      demoService.addOrder({medicalRecordId: this.form.id, patientId: this.form.patientId, doctorId: this.form.doctorId, orderType: this.newOrder.orderType, content: this.newOrder.content.trim()})
-      this.orderVisible = false
-      this.$message.success('Medical order added')
+      demoService.addOrder({medicalRecordId: this.form.id, patientId: this.form.patientId, doctorId: this.form.doctorId, orderType: this.newOrder.orderType, content: this.newOrder.content.trim()}).then(() => {
+        this.orderVisible = false
+        this.$message.success('Medical order added')
+      }).catch(error => this.$message.error(error.message))
     },
     submit () {
       if (!this.form.chiefComplaint.trim() || !this.form.diagnosis.trim()) { this.$message.warning('Chief complaint and diagnosis are required'); return }
       this.$confirm({title: 'Submit this medical record?', content: 'The record will be sent to the Department Admin for review.', okText: 'Submit', cancelText: 'Cancel', onOk: () => {
-        this.persist('SUBMITTED')
-        this.$message.success('Medical record submitted for review')
+        return this.persist('SUBMITTED').then(() => this.$message.success('Medical record submitted for review'))
       }})
     }
   }
