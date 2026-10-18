@@ -6,62 +6,46 @@ import LoginView from '@/views/login/Common'
 import EmptyPageView from '@/views/common/EmptyPageView'
 import HomePageView from '@/views/HomePage'
 import db from 'utils/localstorage'
-import request from 'utils/request'
+import {getDemoMenu} from '@/demo/menu'
 
 Vue.use(Router)
 
-let constRouter = [
-  {
-    path: '/login',
-    name: '登录页',
-    component: LoginView
-  },
-  {
-    path: '/index',
-    name: '首页',
-    redirect: '/home'
-  }
+const constRouter = [
+  {path: '/login', name: 'Login', component: LoginView},
+  {path: '/index', name: 'Home', redirect: '/app/dashboard'}
 ]
 
-let router = new Router({
-  routes: constRouter
-})
-
+const router = new Router({routes: constRouter})
 const whiteList = ['/login']
-
 let asyncRouter
 
-// 导航守卫，渲染动态路由
 router.beforeEach((to, from, next) => {
   if (whiteList.indexOf(to.path) !== -1) {
     next()
+    return
   }
-  let token = db.get('USER_TOKEN')
-  let user = db.get('USER')
-  let userRouter = get('USER_ROUTER')
-  if (token.length && user) {
-    if (!asyncRouter) {
-      if (!userRouter) {
-        request.get(`menu/${user.username}`).then((res) => {
-          asyncRouter = res.data
-          save('USER_ROUTER', asyncRouter)
-          go(to, next)
-        })
-      } else {
-        asyncRouter = userRouter
-        go(to, next)
-      }
-    } else {
-      next()
-    }
-  } else {
+
+  const token = db.get('USER_TOKEN', '')
+  const user = db.get('USER', null)
+  const storedRouter = get('USER_ROUTER')
+  if (!token || !user) {
     next('/login')
+    return
   }
+
+  if (asyncRouter) {
+    next()
+    return
+  }
+
+  asyncRouter = storedRouter || getDemoMenu(user.roleCode)
+  save('USER_ROUTER', asyncRouter)
+  go(to, next)
 })
 
 function go (to, next) {
-  asyncRouter = filterAsyncRouter(asyncRouter)
-  router.addRoutes(asyncRouter)
+  const routes = filterAsyncRouter(JSON.parse(JSON.stringify(asyncRouter)))
+  router.addRoutes(routes)
   next({...to, replace: true})
 }
 
@@ -70,42 +54,38 @@ function save (name, data) {
 }
 
 function get (name) {
-  return JSON.parse(localStorage.getItem(name))
+  const value = localStorage.getItem(name)
+  return value ? JSON.parse(value) : null
 }
 
 function filterAsyncRouter (routes) {
   return routes.filter((route) => {
-    let component = route.component
-    if (component) {
-      switch (route.component) {
-        case 'MenuView':
-          route.component = MenuView
-          break
-        case 'PageView':
-          route.component = PageView
-          break
-        case 'EmptyPageView':
-          route.component = EmptyPageView
-          break
-        case 'HomePageView':
-          route.component = HomePageView
-          break
-        default:
-          route.component = view(component)
-      }
-      if (route.children && route.children.length) {
-        route.children = filterAsyncRouter(route.children)
-      }
-      return true
+    if (!route.component) return false
+    switch (route.component) {
+      case 'MenuView':
+        route.component = MenuView
+        break
+      case 'PageView':
+        route.component = PageView
+        break
+      case 'EmptyPageView':
+        route.component = EmptyPageView
+        break
+      case 'HomePageView':
+        route.component = HomePageView
+        break
+      default:
+        route.component = view(route.component)
     }
+    if (route.children && route.children.length) route.children = filterAsyncRouter(route.children)
+    return true
   })
 }
 
 function view (path) {
+  const demoPath = path.indexOf('demo/') === 0 ? path.substring(5) : path
   return function (resolve) {
-    import(`@/views/${path}.vue`).then(mod => {
-      resolve(mod)
-    })
+    import(`@/views/demo/${demoPath}.vue`).then(mod => resolve(mod))
   }
 }
 

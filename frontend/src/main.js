@@ -37,9 +37,24 @@ Vue.prototype.$export = request.export
 Vue.prototype.$download = request.download
 Vue.prototype.$upload = request.upload
 
-/* eslint-disable no-new */
-new Vue({
-  router,
-  store,
-  render: h => h(Febs)
-}).$mount('#febs')
+function start () {
+  /* eslint-disable no-new */
+  new Vue({
+    router,
+    store,
+    render: h => h(Febs)
+  }).$mount('#febs')
+}
+
+const token = db.get('USER_TOKEN', '')
+if (token) {
+  store.dispatch('demo/load').then(start).catch(error => {
+    if (error.status === 401) {
+      db.remove('USER_TOKEN')
+      db.remove('USER')
+    }
+    start()
+  })
+} else {
+  start()
+}

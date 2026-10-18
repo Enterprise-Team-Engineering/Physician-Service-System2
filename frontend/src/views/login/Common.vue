@@ -3,9 +3,9 @@
     <div class="content" style="margin: 0 auto">
       <div class="top">
         <div class="header">
-          <span class="title" style="color: #333333">智能医疗系统</span>
+          <span class="title" style="color: #333333">Physician Service System</span>
         </div>
-        <div class="desc"></div>
+        <div class="desc">Coordinated care and clinical workflow</div>
       </div>
       <component :is="componentName" @regist="handleRegist" class="main-content"></component>
     </div>
